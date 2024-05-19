@@ -6,23 +6,23 @@ const mongoose = require('mongoose')
 const url = 'mongodb+srv://dako9804:wQKuNQEPwhxRG9N1@clustertest.ti1sg5e.mongodb.net/?retryWrites=true&w=majority&appName=Clustertest'
 const app = express()
 const hostname = process.env.RENDER_EXTERNAL_HOSTNAME || 'localhost';
-console.log('Hostname: ',hostname)
+console.log('Hostname: ', hostname)
 const port = process.env.PORT || 10000;
-console.log('Port: ',port)
+console.log('Port: ', port)
 const secretKey = "c1443354-1991-4072-a980-3589844b649a"
 mongoose.connect(url)
-.then( ()=> console.info('CONECTADO A MONGO') )
-.catch ( (e)=> console.error('El error de conexion es: ',e.message))
+    .then(() => console.info('CONECTADO A MONGO'))
+    .catch((e) => console.error('El error de conexion es: ', e.message))
 
 const personaSchema = mongoose.Schema({
-    codigo:Number,
-    nombre:String,
-    nota:Number,
-    ciudad:String
+    codigo: Number,
+    nombre: String,
+    nota: Number,
+    ciudad: String
 })
 const usuarioSchema = mongoose.Schema({
-    username:String,
-    password:String
+    username: String,
+    password: String
 })
 const PersonaModel = mongoose.model('personas', personaSchema)
 const UsuarioModel = mongoose.model('usuarios', usuarioSchema)
@@ -44,6 +44,9 @@ const authenticateToken = (req, res, next) => {
         next();
     });
 };
+app.get('/Form.html', (req, res) => {
+    res.sendFile(__dirname + '/Form.html');
+});
 
 //Ruta para registrar nuevos usuarios
 app.post('/register', async (req, res) => {
@@ -80,7 +83,7 @@ app.post('/login', async (req, res) => {
 
     const token = jwt.sign({ username: user.username }, secretKey, { expiresIn: '1h' });
 
-    res.json({ token });
+    res.json({ token });
 });
 app.get('/obtenerAlumnos', authenticateToken, async (req, res) => {
     try {
@@ -96,8 +99,8 @@ app.post('/crearAlumno', authenticateToken, async (req, res) => {
     const alumno = new PersonaModel({
         codigo: req.body.codigo,
         nombre: req.body.nombre,
-	nota: req.body.nota,
-	ciudad: req.body.ciudad,
+        nota: req.body.nota,
+        ciudad: req.body.ciudad,
     });
     try {
         const nuevoAlumno = await alumno.save();
@@ -111,13 +114,13 @@ app.put('/actualizarAlumno/:codigo', authenticateToken, async (req, res) => {
     try {
         const codigoAlumno = req.params.codigo;
         const actualizacion = req.body; // Suponemos que req.body contiene los campos a actualizar
- 
+
         const alumnoActualizado = await PersonaModel.findOneAndUpdate({ codigo: codigoAlumno }, actualizacion, { new: true });
- 
+
         if (!alumnoActualizado) {
             return res.status(404).json({ message: 'Alumno no encontrado' });
         }
- 
+
         res.json({ message: 'Alumno actualizado', alumno: alumnoActualizado });
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -127,15 +130,15 @@ app.delete('/eliminarAlumno/:codigo', authenticateToken, async (req, res) => {
     try {
         const codigoAlumno = req.params.codigo;
         const alumnoEliminado = await PersonaModel.findOneAndDelete({ codigo: codigoAlumno });
- 
+
         if (!alumnoEliminado) {
             return res.status(404).json({ message: 'Alumno no encontrado' });
         }
- 
+
         res.json({ message: 'Alumno eliminado', alumno: alumnoEliminado });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 });
 // Inicia el servidor
-app.listen(port, () => {     console.log(`Servidor iniciado en el puerto ${port}`); });
+app.listen(port, () => { console.log(`Servidor iniciado en el puerto ${port}`); });
