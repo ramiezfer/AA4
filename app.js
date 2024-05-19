@@ -5,11 +5,11 @@ const bcrypt = require('bcryptjs')
 const mongoose = require('mongoose')
 const url = 'mongodb+srv://dako9804:wQKuNQEPwhxRG9N1@clustertest.ti1sg5e.mongodb.net/?retryWrites=true&w=majority&appName=Clustertest'
 const app = express()
-const port = 8095
+const port = 10000
 const secretKey = "c1443354-1991-4072-a980-3589844b649a"
 mongoose.connect(url)
-.then( ()=> console.log('CONECTADO A MONGO') )
-.catch ( (e)=> console.log('El error de conexion es: +e'))
+.then( ()=> console.info('CONECTADO A MONGO') )
+.catch ( (e)=> console.error('El error de conexion es: ',e.message))
 
 const personaSchema = mongoose.Schema({
     codigo:Number,
