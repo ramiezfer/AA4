@@ -5,7 +5,10 @@ const bcrypt = require('bcryptjs')
 const mongoose = require('mongoose')
 const url = 'mongodb+srv://dako9804:wQKuNQEPwhxRG9N1@clustertest.ti1sg5e.mongodb.net/?retryWrites=true&w=majority&appName=Clustertest'
 const app = express()
-const port = 10000
+const hostname = process.env.RENDER_EXTERNAL_HOSTNAME || 'localhost';
+console.log('Hostname: ',hostname)
+const port = process.env.PORT || 10000;
+console.log('Port: ',port)
 const secretKey = "c1443354-1991-4072-a980-3589844b649a"
 mongoose.connect(url)
 .then( ()=> console.info('CONECTADO A MONGO') )
