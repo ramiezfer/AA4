@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rellenar tabla con datos de una petición HTTP GET</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <br>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <form>
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Usuario:</label>
+                        <input type="text" id="username" class="form-control"
+                            placeholder="Ingrese su nombre de usuario">
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Contraseña:</label>
+                        <input type="password" id="password" class="form-control" placeholder="Ingrese su contraseña">
+                    </div>
+                    <div class="mb-3">
+                        <label for="token" class="form-label">Token:</label>
+                        <textarea id="token" class="form-control" rows="3" disabled></textarea>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="login()">Iniciar sesión</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <br>
+
+
+    <table id="tabla" class="table">
+        <thead>
+            <tr>
+                <th>Codigo</th>
+                <th>Nombre</th>
+                <th>Nota</th>
+                <th>Distrito</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        function login() {
+            var username = document.getElementById("username").value;
+            var password = document.getElementById("password").value;
+
+            fetch('https://aa4.onrender.com/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            }).then(response => {
+                response.json()
+                .then(data => {
+                    document.getElementById('token').value = data.token;
+                    obtenerDatos(data.token);
+                })
+                .catch(error => console.error('Error:', error))
+            });
+        }
+        // Función para abrir ventana de confirmación y enviar petición DELETE
+        function confirmarEliminar(id) {
+            if (confirm("¿Estás seguro de que deseas eliminar este registro?")) {
+                const token = document.getElementById('token').value
+                fetch(`https://aa4.onrender.com/eliminarAlumno/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            // Eliminar la fila de la tabla
+                            document.getElementById(`fila-${id}`).remove();
+                        } else {
+                            throw new Error('Error al eliminar el registro');
+                        }
+                    })
+                    .catch(error => console.error(error));
+            }
+        }
+
+        // Función para mostrar formulario de actualización
+        function mostrarFormulario(codigo, nombre, nota, ciudad) {
+            const token = document.getElementById('token').value
+            const formulario = `
+<form id="formulario-${codigo}">
+    <input type="hidden" name="codigo" value="${codigo}">
+    <label for="nombre">Nombre:</label>
+    <input type="text" name="nombre" value="${nombre}">
+    <label for="nota">Nota:</label>
+    <input type="number" name="nota" value="${nota}">
+    <label for="ciudad">Distrito:</label>
+    <input type="text" name="ciudad" value="${ciudad}">
+    <button type="submit" class="btn btn-primary">Actualizar</button>
+</form>
+`;
+            document.getElementById(`acciones-${codigo}`).innerHTML = formulario;
+
+            document.getElementById(`formulario-${codigo}`).addEventListener('submit', async function (event) {
+                event.preventDefault();
+
+                const nombre = document.querySelector(`#formulario-${codigo} [name="nombre"]`).value;
+                const nota = document.querySelector(`#formulario-${codigo} [name="nota"]`).value;
+                const ciudad = document.querySelector(`#formulario-${codigo} [name="ciudad"]`).value;
+
+
+                console.log('codigo:', codigo);
+                console.log('nombre:', nombre);
+                console.log('nota:', nota);
+                console.log('ciudad:', ciudad);
+                const url = `https://aa4.onrender.com/actualizarAlumno/${codigo}`;
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ nombre, nota, ciudad })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Error al actualizar el alumno');
+                    }
+
+                    // Actualizar la página después de la actualización exitosa
+                    obtenerDatos(token);
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            });
+        }
+
+        // Obtener datos y llenar la tabla
+        function obtenerDatos(token) {
+            console.log(token);
+            fetch('https://aa4.onrender.com/obtenerAlumnos', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+                .then(response => {
+                    console.log(response);
+                    response.json()
+                        .then(data => {
+                            console.log(data);
+                            const tbody = document.querySelector('#tabla tbody');
+                            // Limpiar el contenido de la tabla
+                            tbody.innerHTML = '';
+                            data.forEach(item => {
+                                const row = document.createElement('tr');
+                                row.id = `fila-${item.codigo}`;
+                                row.innerHTML = `
+                    <td>${item.codigo}</td>
+                    <td>${item.nombre}</td>
+                    <td>${item.nota}</td>
+                    <td>${item.ciudad}</td>
+                    <td id="acciones-${item.codigo}">
+                        <button class="btn btn-danger" onclick="confirmarEliminar(${item.codigo})">Eliminar</button>
+                        <button class="btn btn-primary" onclick="mostrarFormulario(${item.codigo}, '${item.nombre}', '${item.nota}', '${item.ciudad}')">Actualizar</button>
+                    </td>
+                `;
+                                tbody.appendChild(row);
+                            });
+                        })
+                })
+                .catch(error => console.error('Error al obtener los datos:', error));
+        }
+    </script>
+</body>
+
+</html>
